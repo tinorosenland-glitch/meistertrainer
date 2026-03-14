@@ -1,741 +1,612 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { CalendarDays, BookOpen, Timer, BarChart3, CheckCircle2, AlertTriangle, ChevronRight, Target, FileText, CalendarRange, FolderOpen } from "lucide-react";
+const { useEffect, useMemo, useState } = React;
 
 const EXAMS = [
   { id: "hf1", label: "HF1", title: "Auftragsabwicklung", date: "07.07." },
   { id: "hf2", label: "HF2", title: "Elektro- und Sicherheitstechnik", date: "08.07." },
-  { id: "hf3", label: "HF3", title: "Betriebsführung / Organisation", date: "09.07." },
+  { id: "hf3", label: "HF3", title: "Betriebsführung / Organisation", date: "09.07." }
 ];
-
-const YEAR_LISTS = {
-  hf1: ["2011 Sommer", "2012 Frühjahr", "2012 Sommer", "2013 Frühjahr", "2013 Sommer", "2014 Frühjahr", "2014 Sommer", "2015 Frühjahr", "2015 Sommer", "2016 Frühjahr", "2016 Sommer", "2017", "2018"],
-  hf2: ["2011 Sommer", "2012 Frühjahr", "2012 Sommer", "2013 Frühjahr", "2014 Frühjahr", "2014 Sommer", "2015 Frühjahr", "2015 Sommer", "2016 Frühjahr", "2016 Sommer", "2017 Frühjahr", "2017 Sommer"],
-  hf3: ["2011 Sommer", "2012 Frühjahr", "2012 Sommer", "2013 Frühjahr", "2013 Sommer", "2014 Frühjahr", "2014 Sommer", "2015 Frühjahr", "2015 Sommer", "2016 Frühjahr", "2016 Sommer", "2017 Frühjahr", "2017 Sommer", "2018"],
-};
 
 const HF1_2011_TASKS = [
   { name: "Aufgabe 1", topic: "Vorbereitung", pageStart: 7, pageEnd: 7 },
   { name: "Aufgabe 2", topic: "Mitarbeiter-Kapazität", pageStart: 7, pageEnd: 8 },
   { name: "Aufgabe 3", topic: "Abschlagszahlung", pageStart: 9, pageEnd: 9 },
   { name: "Aufgabe 4", topic: "Nachkalkulation", pageStart: 10, pageEnd: 10 },
-  { name: "Aufgabe 5", topic: "Schlussabwicklung", pageStart: 10, pageEnd: 10 },
+  { name: "Aufgabe 5", topic: "Schlussabwicklung", pageStart: 10, pageEnd: 10 }
 ];
-
-const HF2_2011_TASKS = [
-  { name: "Aufgabe 1", topic: "Schutzmaßnahmen", pageStart: 2, pageEnd: 3 },
-  { name: "Aufgabe 2", topic: "Installationstechnik", pageStart: 4, pageEnd: 4 },
-  { name: "Aufgabe 3", topic: "Photovoltaik", pageStart: 5, pageEnd: 5 },
-  { name: "Aufgabe 4", topic: "Kindergarten Provisorium", pageStart: 6, pageEnd: 8 },
-  { name: "Aufgabe 5", topic: "Transformatoren", pageStart: 9, pageEnd: 9 },
-  { name: "Aufgabe 6", topic: "Elektrischer Unfall", pageStart: 10, pageEnd: 11 },
-  { name: "Aufgabe 7", topic: "Antennentechnik", pageStart: 12, pageEnd: 14 },
-  { name: "Aufgabe 8", topic: "Sicherheitstechnik", pageStart: 15, pageEnd: 16 },
-];
-
-const HF3_2011_TASKS = [
-  { name: "Aufgabe 1", topic: "UG haftungsbeschränkt", pageStart: 2, pageEnd: 2 },
-  { name: "Aufgabe 2", topic: "Unternehmensleitbild", pageStart: 3, pageEnd: 3 },
-  { name: "Aufgabe 3", topic: "Angebotskalkulation", pageStart: 4, pageEnd: 4 },
-  { name: "Aufgabe 4", topic: "Logistik planen", pageStart: 5, pageEnd: 5 },
-  { name: "Aufgabe 5", topic: "Abnahme und Beweislast", pageStart: 6, pageEnd: 6 },
-  { name: "Aufgabe 6", topic: "Begleichung von Steuerschuld", pageStart: 7, pageEnd: 7 },
-  { name: "Aufgabe 7", topic: "Forderungen / Außenstände", pageStart: 8, pageEnd: 8 },
-  { name: "Aufgabe 8", topic: "Arbeitssicherheit", pageStart: 9, pageEnd: 9 },
-];
-
-function buildGenericTasks(count) {
-  return Array.from({ length: count }, (_, index) => ({
-    name: `Aufgabe ${index + 1}`,
-    topic: `Aufgabenbereich ${index + 1}`,
-    pageStart: 1,
-    pageEnd: 1,
-  }));
-}
-
-function buildFileName(prefix, year) {
-  return `${prefix}_${year.replace(/ /g, "-")}.pdf`;
-}
 
 const examLibrary = {
   hf1: {
     label: "HF1",
     title: "Auftragsabwicklung",
-    examDuration: "03:00:00",
-    exams: YEAR_LISTS.hf1.map((year) => ({
-      year,
-      fileName: buildFileName("Teil-2_AA_Prüfung", year),
-      pdfPath: `/pdfs/hf1/${buildFileName("Teil-2_AA_Prüfung", year)}`,
-      tasks: year === "2011 Sommer" ? HF1_2011_TASKS : buildGenericTasks(5),
-    })),
+    exams: [
+      {
+        year: "2011 Sommer",
+        fileName: "Teil-2_AA_Prüfung_2011-Sommer.pdf",
+        pdfPath: "./pdfs/hf1/Teil-2_AA_Prüfung_2011-Sommer.pdf",
+        tasks: HF1_2011_TASKS
+      }
+    ]
   },
   hf2: {
     label: "HF2",
     title: "Elektro- und Sicherheitstechnik",
-    examDuration: "03:00:00",
-    exams: YEAR_LISTS.hf2.map((year) => ({
-      year,
-      fileName: buildFileName("Teil-2_ES_Prüfung", year),
-      pdfPath: `/pdfs/hf2/${buildFileName("Teil-2_ES_Prüfung", year)}`,
-      tasks: year === "2011 Sommer" ? HF2_2011_TASKS : buildGenericTasks(8),
-    })),
+    exams: []
   },
   hf3: {
     label: "HF3",
     title: "Betriebsführung / Organisation",
-    examDuration: "03:00:00",
-    exams: YEAR_LISTS.hf3.map((year) => ({
-      year,
-      fileName: buildFileName("Teil-2_BB_Prüfung", year),
-      pdfPath: `/pdfs/hf3/${buildFileName("Teil-2_BB_Prüfung", year)}`,
-      tasks: year === "2011 Sommer" ? HF3_2011_TASKS : buildGenericTasks(8),
-    })),
-  },
+    exams: []
+  }
 };
 
-const initialPlan = [
-  { day: "Montag", task: "HF1 – 2011 Sommer – Aufgabe 2", duration: "60 min", done: false },
-  { day: "Dienstag", task: "HF2 – Schutzmaßnahmen", duration: "90 min", done: false },
-  { day: "Mittwoch", task: "HF1 – Nachkalkulation", duration: "60 min", done: true },
-  { day: "Samstag", task: "Simulation HF2", duration: "240 min", done: false },
-];
-
-function SectionTitle({ icon: Icon, title, subtitle }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="rounded-2xl bg-muted p-2">
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-        {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
-      </div>
-    </div>
-  );
-}
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#f3f4f6",
+    color: "#111827"
+  },
+  container: {
+    maxWidth: "1400px",
+    margin: "0 auto",
+    padding: "24px",
+    display: "grid",
+    gridTemplateColumns: "260px 1fr",
+    gap: "24px"
+  },
+  sidebar: {
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "24px",
+    padding: "20px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+    height: "fit-content",
+    position: "sticky",
+    top: "24px"
+  },
+  title: {
+    fontSize: "28px",
+    fontWeight: "700",
+    marginBottom: "6px"
+  },
+  sub: {
+    color: "#6b7280",
+    fontSize: "14px",
+    marginBottom: "20px"
+  },
+  navButton: function(active) {
+    return {
+      width: "100%",
+      textAlign: "left",
+      padding: "12px 14px",
+      marginBottom: "8px",
+      borderRadius: "16px",
+      border: active ? "1px solid #111827" : "1px solid #d1d5db",
+      background: active ? "#111827" : "#ffffff",
+      color: active ? "#ffffff" : "#111827",
+      cursor: "pointer",
+      fontSize: "14px",
+      fontWeight: "600"
+    };
+  },
+  main: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px"
+  },
+  sectionTitle: {
+    fontSize: "28px",
+    fontWeight: "700",
+    margin: 0
+  },
+  sectionSub: {
+    color: "#6b7280",
+    marginTop: "8px",
+    marginBottom: 0
+  },
+  grid3: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "16px"
+  },
+  grid2: {
+    display: "grid",
+    gridTemplateColumns: "1.2fr 0.8fr",
+    gap: "16px"
+  },
+  card: {
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: "24px",
+    padding: "20px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+  },
+  cardTitle: {
+    fontSize: "18px",
+    fontWeight: "700",
+    marginBottom: "6px"
+  },
+  cardSub: {
+    fontSize: "14px",
+    color: "#6b7280",
+    marginBottom: "16px"
+  },
+  statBig: {
+    fontSize: "34px",
+    fontWeight: "700"
+  },
+  smallText: {
+    fontSize: "14px",
+    color: "#6b7280",
+    marginTop: "8px"
+  },
+  itemButton: {
+    width: "100%",
+    textAlign: "left",
+    padding: "14px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "16px",
+    background: "#ffffff",
+    cursor: "pointer",
+    marginBottom: "10px",
+    fontSize: "14px"
+  },
+  quickButton: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "16px",
+    border: "1px solid #111827",
+    background: "#111827",
+    color: "#ffffff",
+    cursor: "pointer",
+    fontWeight: "600",
+    marginBottom: "10px"
+  },
+  outlineButton: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "16px",
+    border: "1px solid #d1d5db",
+    background: "#ffffff",
+    color: "#111827",
+    cursor: "pointer",
+    fontWeight: "600"
+  },
+  fileGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "12px"
+  },
+  fileCard: {
+    border: "1px solid #e5e7eb",
+    borderRadius: "18px",
+    padding: "14px",
+    background: "#ffffff",
+    cursor: "pointer"
+  },
+  hfLabel: {
+    fontSize: "12px",
+    color: "#6b7280",
+    marginBottom: "6px"
+  },
+  fileTitle: {
+    fontSize: "15px",
+    fontWeight: "700",
+    marginBottom: "6px"
+  },
+  progressWrap: {
+    marginBottom: "18px"
+  },
+  progressRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "8px",
+    fontSize: "14px"
+  },
+  progressBar: {
+    height: "10px",
+    background: "#e5e7eb",
+    borderRadius: "999px",
+    overflow: "hidden"
+  },
+  progressFill: function(value) {
+    return {
+      height: "100%",
+      width: value + "%",
+      background: "#111827"
+    };
+  },
+  tag: {
+    display: "inline-block",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    fontSize: "12px",
+    background: "#eef2ff",
+    color: "#3730a3",
+    marginRight: "8px"
+  },
+  actionRow: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
+  textarea: {
+    width: "100%",
+    minHeight: "140px",
+    padding: "14px",
+    borderRadius: "16px",
+    border: "1px solid #d1d5db",
+    fontFamily: "Arial, sans-serif",
+    fontSize: "14px"
+  },
+  iframe: {
+    width: "100%",
+    height: "720px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "18px",
+    background: "#ffffff"
+  }
+};
 
 function formatPageRange(task) {
   if (!task) return "Wird ergänzt";
-  return task.pageStart === task.pageEnd ? `Seite ${task.pageStart}` : `Seite ${task.pageStart}–${task.pageEnd}`;
+  if (task.pageStart === task.pageEnd) return "Seite " + task.pageStart;
+  return "Seite " + task.pageStart + "–" + task.pageEnd;
 }
 
-function PdfFrame({ src, title, height = "h-[760px]" }) {
-  if (!src) {
+function taskKey(hfId, examYear, taskName) {
+  return hfId + "__" + examYear + "__" + taskName;
+}
+
+function App() {
+  const [seite, setSeite] = useState("dashboard");
+  const [selectedHF, setSelectedHF] = useState("hf1");
+  const [selectedExamYear, setSelectedExamYear] = useState("2011 Sommer");
+  const [selectedTask, setSelectedTask] = useState("Aufgabe 1");
+  const [taskStates, setTaskStates] = useState({});
+
+  useEffect(function() {
+    const saved = localStorage.getItem("meistertrainer-taskstates-v1");
+    if (saved) {
+      try {
+        setTaskStates(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(function() {
+    localStorage.setItem("meistertrainer-taskstates-v1", JSON.stringify(taskStates));
+  }, [taskStates]);
+
+  const currentExamEntry = examLibrary[selectedHF].exams[0];
+  const currentTaskMeta = currentExamEntry.tasks.find(function(task) {
+    return task.name === selectedTask;
+  }) || currentExamEntry.tasks[0];
+
+  const currentPdfUrl = currentExamEntry.pdfPath + "#page=" + currentTaskMeta.pageStart + "&view=FitH";
+  const currentStateKey = taskKey(selectedHF, selectedExamYear, selectedTask);
+  const currentTaskState = taskStates[currentStateKey] || { done: false, difficult: false, notes: "" };
+
+  const progress = useMemo(function() {
+    const allTasks = currentExamEntry.tasks.map(function(task) {
+      return taskKey("hf1", "2011 Sommer", task.name);
+    });
+    const doneCount = allTasks.filter(function(key) {
+      return taskStates[key] && taskStates[key].done;
+    }).length;
+    const hf1Progress = allTasks.length ? Math.round(doneCount / allTasks.length * 100) : 0;
+    return { hf1: hf1Progress, hf2: 0, hf3: 0 };
+  }, [taskStates, currentExamEntry.tasks]);
+
+  function openTask(taskName) {
+    setSelectedHF("hf1");
+    setSelectedExamYear("2011 Sommer");
+    setSelectedTask(taskName);
+    setSeite("aufgabe");
+  }
+
+  function setTaskValue(patch) {
+    setTaskStates(function(prev) {
+      const next = Object.assign({}, prev);
+      next[currentStateKey] = Object.assign(
+        { done: false, difficult: false, notes: "" },
+        prev[currentStateKey] || {},
+        patch
+      );
+      return next;
+    });
+  }
+
+  function Dashboard() {
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-[18px] border bg-background text-center text-sm text-muted-foreground">
-        PDF-Datei noch nicht hochgeladen.
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Dashboard</h1>
+          <p style={styles.sectionSub}>Heute sehen, was ansteht und wo du stehst.</p>
+        </div>
+
+        <div style={styles.grid3}>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Countdown</div>
+            <div style={styles.cardSub}>Nächste Prüfung</div>
+            <div style={styles.statBig}>HF1 am 07.07.</div>
+            <div style={styles.smallText}>HF2 am 08.07. · HF3 am 09.07.</div>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Heutige Aufgaben</div>
+            <div style={styles.cardSub}>Automatisch vorgeschlagen</div>
+            <button style={styles.itemButton} onClick={function() { openTask("Aufgabe 2"); }}>
+              HF1 · 2011 Sommer · Aufgabe 2
+            </button>
+            <button style={styles.itemButton} onClick={function() { openTask("Aufgabe 1"); }}>
+              HF1 · 2011 Sommer · Aufgabe 1
+            </button>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Schnellstart</div>
+            <div style={styles.cardSub}>Direkt loslegen</div>
+            <button style={styles.quickButton} onClick={function() { setSeite("pruefungen"); }}>
+              Weiterlernen
+            </button>
+            <button style={styles.outlineButton} onClick={function() { setSeite("simulation"); }}>
+              Simulation starten
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.grid2}>
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Prüfungsdateien</div>
+            <div style={styles.cardSub}>Erste Prüfung anklickbar</div>
+            <div style={styles.fileGrid}>
+              <div style={styles.fileCard} onClick={function() { setSeite("pruefungen"); }}>
+                <div style={styles.hfLabel}>HF1</div>
+                <div style={styles.fileTitle}>2011 Sommer</div>
+                <div style={styles.smallText}>5 Aufgaben</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <div style={styles.cardTitle}>Aufgaben-Schnellzugriff</div>
+            <div style={styles.cardSub}>Direkt einzelne Aufgaben öffnen</div>
+            {currentExamEntry.tasks.map(function(task) {
+              return (
+                <button key={task.name} style={styles.itemButton} onClick={function() { openTask(task.name); }}>
+                  HF1 · 2011 Sommer · {task.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>HF-Fortschritt</div>
+          <div style={styles.cardSub}>Wird automatisch aus erledigten Aufgaben berechnet</div>
+
+          <div style={styles.progressWrap}>
+            <div style={styles.progressRow}>
+              <span>HF1 · Auftragsabwicklung</span>
+              <span>{progress.hf1}%</span>
+            </div>
+            <div style={styles.progressBar}>
+              <div style={styles.progressFill(progress.hf1)}></div>
+            </div>
+          </div>
+
+          <div style={styles.progressWrap}>
+            <div style={styles.progressRow}>
+              <span>HF2 · Elektro- und Sicherheitstechnik</span>
+              <span>0%</span>
+            </div>
+            <div style={styles.progressBar}>
+              <div style={styles.progressFill(0)}></div>
+            </div>
+          </div>
+
+          <div style={styles.progressWrap}>
+            <div style={styles.progressRow}>
+              <span>HF3 · Betriebsführung / Organisation</span>
+              <span>0%</span>
+            </div>
+            <div style={styles.progressBar}>
+              <div style={styles.progressFill(0)}></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  return <iframe src={src} title={title} className={`w-full rounded-xl bg-background ${height}`} />;
-}
+  function Pruefungen() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Prüfungen</h1>
+          <p style={styles.sectionSub}>Aufgabe anklicken und PDF öffnen.</p>
+        </div>
 
-export default function MeisterTrainerUIV2() {
-  const [page, setPage] = useState("dashboard");
-  const [selectedHF, setSelectedHF] = useState("hf1");
-  const [selectedExamYear, setSelectedExamYear] = useState(examLibrary.hf1.exams[0].year);
-  const [selectedTask, setSelectedTask] = useState(examLibrary.hf1.exams[0].tasks[0].name);
-  const [notes, setNotes] = useState("");
-  const [weeklyPlan, setWeeklyPlan] = useState(initialPlan);
-  const [simulationRunning, setSimulationRunning] = useState(false);
-  const [simulationHF, setSimulationHF] = useState("hf1");
-  const [simulationTime] = useState("03:00:00");
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>HF1 · 2011 Sommer</div>
+          <div style={styles.cardSub}>{currentExamEntry.fileName}</div>
 
-  const sidebar = [
-    { id: "dashboard", label: "Dashboard", icon: Target },
-    { id: "lernplan", label: "Lernplan", icon: CalendarRange },
-    { id: "pruefungen", label: "Prüfungen", icon: BookOpen },
-    { id: "simulation", label: "Simulation", icon: Timer },
-    { id: "fortschritt", label: "Fortschritt", icon: BarChart3 },
-    { id: "kalender", label: "Kalender", icon: CalendarDays },
-  ];
-
-  const progress = useMemo(() => ({ hf1: 62, hf2: 38, hf3: 21 }), []);
-
-  const dashboardFiles = useMemo(
-    () => [
-      ...examLibrary.hf1.exams.map((exam) => ({ hf: "HF1", file: exam.year, taskCount: exam.tasks.length })),
-      ...examLibrary.hf2.exams.map((exam) => ({ hf: "HF2", file: exam.year, taskCount: exam.tasks.length })),
-      ...examLibrary.hf3.exams.map((exam) => ({ hf: "HF3", file: exam.year, taskCount: exam.tasks.length })),
-    ],
-    []
-  );
-
-  const dashboardTasks = useMemo(
-    () => [
-      { hf: "HF1", exam: "2011 Sommer", task: "Aufgabe 1" },
-      { hf: "HF1", exam: "2014 Sommer", task: "Aufgabe 4" },
-      { hf: "HF2", exam: "2011 Sommer", task: "Aufgabe 1" },
-      { hf: "HF2", exam: "2017 Sommer", task: "Aufgabe 7" },
-      { hf: "HF3", exam: "2011 Sommer", task: "Aufgabe 2" },
-      { hf: "HF3", exam: "2018", task: "Aufgabe 5" },
-    ],
-    []
-  );
-
-  const currentExamHeader = EXAMS.find((exam) => exam.id === selectedHF);
-  const currentExamEntry = useMemo(
-    () => examLibrary[selectedHF].exams.find((exam) => exam.year === selectedExamYear) || examLibrary[selectedHF].exams[0],
-    [selectedHF, selectedExamYear]
-  );
-  const currentTaskMeta = useMemo(
-    () => currentExamEntry.tasks.find((task) => task.name === selectedTask) || currentExamEntry.tasks[0],
-    [currentExamEntry, selectedTask]
-  );
-  const currentPdfUrl = currentExamEntry?.pdfPath
-    ? `${currentExamEntry.pdfPath}#page=${currentTaskMeta?.pageStart || 1}&view=FitH`
-    : "";
-
-  const simulationExamEntry = examLibrary[simulationHF].exams[0];
-  const simulationPdfUrl = simulationExamEntry?.pdfPath ? `${simulationExamEntry.pdfPath}#page=1&view=FitH` : "";
-
-  const togglePlanDone = (index) => {
-    setWeeklyPlan((prev) => prev.map((item, i) => (i === index ? { ...item, done: !item.done } : item)));
-  };
-
-  const selectExam = (hfId, examYear, taskName) => {
-    const examEntry = examLibrary[hfId].exams.find((exam) => exam.year === examYear) || examLibrary[hfId].exams[0];
-    setSelectedHF(hfId);
-    setSelectedExamYear(examEntry.year);
-    setSelectedTask(taskName || examEntry.tasks[0].name);
-  };
-
-  const changeHF = (hfId) => {
-    const firstExam = examLibrary[hfId].exams[0];
-    setSelectedHF(hfId);
-    setSelectedExamYear(firstExam.year);
-    setSelectedTask(firstExam.tasks[0].name);
-  };
-
-  const openTaskFromDashboard = (hfLabel, examYear, taskName) => {
-    const hfId = EXAMS.find((exam) => exam.label === hfLabel)?.id || "hf1";
-    selectExam(hfId, examYear, taskName);
-    setPage("aufgabe");
-  };
-
-  const openExamFromDashboard = (hfLabel, examYear) => {
-    const hfId = EXAMS.find((exam) => exam.label === hfLabel)?.id || "hf1";
-    selectExam(hfId, examYear);
-    setPage("pruefungen");
-  };
-
-  const DashboardPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={Target} title="Dashboard" subtitle="Heute sehen, was ansteht und wo du stehst." />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Countdown</CardTitle>
-            <CardDescription>Nächste Prüfung</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">HF1 in 115 Tagen</div>
-            <p className="mt-2 text-sm text-muted-foreground">07.07. · Auftragsabwicklung</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Heutige Aufgaben</CardTitle>
-            <CardDescription>Automatisch vorgeschlagen</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <button onClick={() => openTaskFromDashboard("HF1", "2011 Sommer", "Aufgabe 2")} className="w-full rounded-2xl border p-3 text-left transition hover:bg-muted">
-              HF1 · 2011 Sommer · Aufgabe 2
-            </button>
-            <button onClick={() => openTaskFromDashboard("HF2", "2011 Sommer", "Aufgabe 1")} className="w-full rounded-2xl border p-3 text-left transition hover:bg-muted">
-              HF2 · Schutzmaßnahmen wiederholen
-            </button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base">Schnellstart</CardTitle>
-            <CardDescription>Direkt loslegen</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <Button className="rounded-2xl justify-between" onClick={() => setPage("pruefungen")}>
-              Weiterlernen <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="rounded-2xl justify-between" onClick={() => setPage("simulation")}>
-              Simulation starten <ChevronRight className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Prüfungsdateien</CardTitle>
-            <CardDescription>Alle Prüfungen vorbereitet · PDF-ready</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {dashboardFiles.map((item, index) => (
+          {currentExamEntry.tasks.map(function(task) {
+            return (
               <button
-                key={`${item.hf}-${item.file}-${index}`}
-                onClick={() => openExamFromDashboard(item.hf, item.file)}
-                className="rounded-2xl border p-4 text-left transition hover:bg-muted"
+                key={task.name}
+                style={styles.itemButton}
+                onClick={function() {
+                  setSelectedTask(task.name);
+                  setSeite("aufgabe");
+                }}
               >
-                <div className="mb-1 text-sm text-muted-foreground">{item.hf}</div>
-                <div className="font-semibold">{item.file}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{item.taskCount} Aufgaben</div>
+                {task.name} · {task.topic} · {formatPageRange(task)}
               </button>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Aufgaben-Schnellzugriff</CardTitle>
-            <CardDescription>Direkt einzelne Aufgaben öffnen</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {dashboardTasks.map((item, index) => (
-              <button
-                key={`${item.hf}-${item.exam}-${item.task}-${index}`}
-                onClick={() => openTaskFromDashboard(item.hf, item.exam, item.task)}
-                className="flex w-full items-center justify-between rounded-2xl border p-3 text-left transition hover:bg-muted"
-              >
-                <div>
-                  <div className="font-medium">{item.hf} · {item.task}</div>
-                  <div className="text-sm text-muted-foreground">{item.exam}</div>
-                </div>
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            ))}
-          </CardContent>
-        </Card>
+            );
+          })}
+        </div>
       </div>
+    );
+  }
 
-      <Card className="rounded-3xl shadow-sm">
-        <CardHeader>
-          <CardTitle>HF-Fortschritt</CardTitle>
-          <CardDescription>Dein aktueller Stand für Teil 2</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {EXAMS.map((exam) => (
-            <div key={exam.id} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{exam.label} · {exam.title}</span>
-                <span>{progress[exam.id]}%</span>
-              </div>
-              <Progress value={progress[exam.id]} />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  function Aufgabe() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Einzelaufgabe</h1>
+          <p style={styles.sectionSub}>Original-PDF, Notizen und Lernstatus.</p>
+        </div>
 
-  const LernplanPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={CalendarRange} title="Lernplan" subtitle="Flexibel planbar für Woche und Wochenende." />
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>HF1 · 2011 Sommer · {selectedTask}</div>
+          <div style={styles.cardSub}>{currentTaskMeta.topic} · {formatPageRange(currentTaskMeta)}</div>
 
-      <Card className="rounded-3xl shadow-sm">
-        <CardHeader>
-          <CardTitle>Diese Woche</CardTitle>
-          <CardDescription>Unter der Woche 1–2 h, Wochenende 4–5 h</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {weeklyPlan.map((item, index) => (
-            <div key={index} className="flex items-center gap-3 rounded-2xl border p-3">
-              <Checkbox checked={item.done} onCheckedChange={() => togglePlanDone(index)} />
-              <div className="min-w-24 text-sm font-medium">{item.day}</div>
-              <div className="flex-1 text-sm">{item.task}</div>
-              <Badge variant="secondary" className="rounded-xl">{item.duration}</Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Automatik</CardTitle>
-            <CardDescription>Später mit Kalendern verknüpft</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• freie Zeitfenster erkennen</p>
-            <p>• schwache HF höher gewichten</p>
-            <p>• nicht geschaffte Blöcke neu einplanen</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Heute empfohlen</CardTitle>
-            <CardDescription>Vom Lernsystem priorisiert</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="rounded-2xl bg-muted p-3">HF1 – Aufgabe 2 bearbeiten</div>
-            <div className="rounded-2xl bg-muted p-3">HF2 – 20 Minuten Wiederholung</div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const PruefungenPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={BookOpen} title="Prüfungen" subtitle="Nach HF, Jahr und Aufgabe navigieren." />
-
-      <Tabs value={selectedHF} onValueChange={changeHF}>
-        <TabsList className="grid w-full grid-cols-3 rounded-2xl">
-          {EXAMS.map((exam) => (
-            <TabsTrigger key={exam.id} value={exam.id} className="rounded-2xl">{exam.label}</TabsTrigger>
-          ))}
-        </TabsList>
-
-        {EXAMS.map((exam) => (
-          <TabsContent key={exam.id} value={exam.id} className="mt-4">
-            <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-              <Card className="rounded-3xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>{exam.title}</CardTitle>
-                  <CardDescription>{exam.date}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[420px] pr-3">
-                    <div className="space-y-3">
-                      {examLibrary[exam.id].exams.map((examItem) => (
-                        <button
-                          key={examItem.year}
-                          onClick={() => {
-                            setSelectedExamYear(examItem.year);
-                            setSelectedTask(examItem.tasks[0].name);
-                          }}
-                          className={`w-full rounded-2xl border p-3 text-left transition ${selectedExamYear === examItem.year ? "border-primary bg-muted" : "hover:bg-muted/60"}`}
-                        >
-                          <div className="font-medium">{examItem.year}</div>
-                          <div className="text-sm text-muted-foreground">{examItem.tasks.length} Aufgaben</div>
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-3xl shadow-sm">
-                <CardHeader>
-                  <CardTitle>{selectedExamYear}</CardTitle>
-                  <CardDescription>Aufgaben öffnen · direkt PDF-bereit</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    {currentExamEntry.tasks.map((task) => (
-                      <Button
-                        key={task.name}
-                        variant={selectedTask === task.name ? "default" : "outline"}
-                        className="rounded-2xl"
-                        onClick={() => setSelectedTask(task.name)}
-                      >
-                        {task.name}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <div className="rounded-[28px] border bg-muted/40 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Vorschau</div>
-                        <div className="text-lg font-semibold">{currentExamHeader?.label} · {selectedExamYear} · {selectedTask}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">{currentTaskMeta.topic} · {formatPageRange(currentTaskMeta)}</div>
-                      </div>
-                      <Badge className="rounded-xl">PDF-Ansicht</Badge>
-                    </div>
-
-                    <div className="rounded-[24px] border border-dashed bg-background p-6 text-sm text-muted-foreground">
-                      <div className="mb-3 flex items-center gap-2 font-medium text-foreground">
-                        <FolderOpen className="h-4 w-4" />
-                        Vorbereitung für echte Prüfungsansicht
-                      </div>
-                      <div>Datei: {currentExamEntry.fileName}</div>
-                      <div>Bereich: {currentTaskMeta.topic}</div>
-                      <div>Prüfungsseiten: {formatPageRange(currentTaskMeta)}</div>
-
-                      <div className="mt-4 rounded-[18px] border bg-muted/40 p-2">
-                        <PdfFrame src={currentPdfUrl} title={`Vorschau ${currentExamHeader?.label} ${selectedExamYear} ${selectedTask}`} height="h-[320px]" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button className="rounded-2xl" onClick={() => setPage("aufgabe")}>Aufgabe öffnen</Button>
-                    <Button variant="outline" className="rounded-2xl">Als schwierig markieren</Button>
-                    <Button variant="outline" className="rounded-2xl">Für Wiederholung merken</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
-  );
-
-  const AufgabenDetail = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={FileText} title="Einzelaufgabe" subtitle="Originalansicht mit Notizen und Lernstatus." />
-
-      <Card className="rounded-3xl shadow-sm">
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>{currentExamHeader?.label} · {selectedExamYear} · {selectedTask}</CardTitle>
-            <CardDescription>Bearbeitungsstatus: offen · {currentTaskMeta.topic} · {formatPageRange(currentTaskMeta)}</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Badge className="rounded-xl">Originalseite</Badge>
-            <Badge variant="secondary" className="rounded-xl">Zoom / Scroll / Vollbild</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-[28px] border bg-muted/40 p-5 text-sm">
-            <div className="mb-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border bg-background p-3">
-                <div className="text-xs text-muted-foreground">Datei</div>
-                <div className="mt-1 font-medium break-words">{currentExamEntry.fileName}</div>
-              </div>
-              <div className="rounded-2xl border bg-background p-3">
-                <div className="text-xs text-muted-foreground">Thema</div>
-                <div className="mt-1 font-medium">{currentTaskMeta.topic}</div>
-              </div>
-              <div className="rounded-2xl border bg-background p-3">
-                <div className="text-xs text-muted-foreground">Seiten</div>
-                <div className="mt-1 font-medium">{formatPageRange(currentTaskMeta)}</div>
-              </div>
-            </div>
-
-            <div className="rounded-[24px] border bg-background p-3">
-              <PdfFrame src={currentPdfUrl} title={`${currentExamHeader?.label} ${selectedExamYear} ${selectedTask}`} height="h-[760px]" />
-            </div>
+          <div style={{ marginBottom: "16px" }}>
+            <span style={styles.tag}>{currentExamEntry.fileName}</span>
+            {currentTaskState.done ? <span style={styles.tag}>Erledigt</span> : null}
+            {currentTaskState.difficult ? (
+              <span style={{ ...styles.tag, background: "#fef2f2", color: "#991b1b" }}>Schwierig</span>
+            ) : null}
           </div>
 
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Eigene Notizen zur Aufgabe…"
-            className="min-h-[140px] rounded-2xl"
+          <div style={{ marginBottom: "16px" }}>
+            <iframe
+              src={currentPdfUrl}
+              title={"pdf-" + selectedTask}
+              style={styles.iframe}
+            />
+          </div>
+
+          <div style={{ marginBottom: "12px", fontWeight: "700" }}>Meine Notizen</div>
+          <textarea
+            style={styles.textarea}
+            value={currentTaskState.notes}
+            onChange={function(e) {
+              setTaskValue({ notes: e.target.value });
+            }}
+            placeholder="Hier kannst du deine Lösung, Merkpunkte oder Fehler notieren."
           />
 
-          <div className="flex flex-wrap gap-2">
-            <Button className="rounded-2xl"><CheckCircle2 className="mr-2 h-4 w-4" /> Erledigt</Button>
-            <Button variant="outline" className="rounded-2xl"><AlertTriangle className="mr-2 h-4 w-4" /> Schwierig</Button>
-            <Button variant="outline" className="rounded-2xl">Später wiederholen</Button>
-            <Button variant="outline" className="rounded-2xl" onClick={() => setPage("pruefungen")}>Zurück zu Prüfungen</Button>
+          <div style={{ ...styles.actionRow, marginTop: "16px" }}>
+            <button
+              style={styles.quickButton}
+              onClick={function() {
+                setTaskValue({ done: !currentTaskState.done });
+              }}
+            >
+              {currentTaskState.done ? "Als offen markieren" : "Als erledigt markieren"}
+            </button>
+
+            <button
+              style={styles.outlineButton}
+              onClick={function() {
+                setTaskValue({ difficult: !currentTaskState.difficult });
+              }}
+            >
+              {currentTaskState.difficult ? "Nicht mehr schwierig" : "Als schwierig markieren"}
+            </button>
+
+            <button style={styles.outlineButton} onClick={function() { setSeite("pruefungen"); }}>
+              Zurück zu Prüfungen
+            </button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const SimulationPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={Timer} title="Simulation" subtitle="Prüfungsmodus im Originalstil für HF1, HF2 und HF3." />
-
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Simulation starten</CardTitle>
-            <CardDescription>HF auswählen und Prüfungssimulation öffnen</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {EXAMS.map((exam) => (
-              <button
-                key={exam.id}
-                onClick={() => setSimulationHF(exam.id)}
-                className={`w-full rounded-2xl border p-3 text-left ${simulationHF === exam.id ? "border-primary bg-muted" : "hover:bg-muted/60"}`}
-              >
-                <div className="font-medium">{exam.label}</div>
-                <div className="text-sm text-muted-foreground">{exam.title}</div>
-              </button>
-            ))}
-            <Button className="w-full rounded-2xl" onClick={() => setSimulationRunning(true)}>Simulation starten</Button>
-            <Button variant="outline" className="w-full rounded-2xl" onClick={() => setSimulationRunning(false)}>Zurücksetzen</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <CardTitle>{simulationHF.toUpperCase()} Simulation</CardTitle>
-                <CardDescription>Originalansicht mit Timer und vorbereiteter PDF-Integration</CardDescription>
-              </div>
-              <div className="rounded-2xl border px-4 py-2 text-xl font-bold">{simulationTime}</div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {simulationExamEntry.tasks.slice(0, 3).map((task, index) => (
-                <Badge key={task.name} variant={index === 0 ? "default" : "secondary"} className="rounded-xl">
-                  {task.name}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="rounded-[28px] border bg-muted/40 p-4">
-              {simulationRunning ? (
-                <PdfFrame src={simulationPdfUrl} title={`${simulationHF.toUpperCase()} Simulation PDF`} height="h-[420px]" />
-              ) : (
-                <div className="flex h-[420px] items-center justify-center rounded-[20px] border bg-background text-center text-sm text-muted-foreground">
-                  Wähle links ein HF und starte die Simulation.
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button className="rounded-2xl">Nächste Aufgabe</Button>
-              <Button variant="outline" className="rounded-2xl">Selbstbewertung</Button>
-              <Button variant="outline" className="rounded-2xl">Fortschritt speichern</Button>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const FortschrittPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={BarChart3} title="Fortschritt" subtitle="Offene, schwierige und bearbeitete Aufgaben im Blick." />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        {EXAMS.map((exam) => (
-          <Card key={exam.id} className="rounded-3xl shadow-sm">
-            <CardHeader>
-              <CardTitle>{exam.label}</CardTitle>
-              <CardDescription>{exam.title}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress value={progress[exam.id]} />
-              <div className="text-sm text-muted-foreground">Fortschritt: {progress[exam.id]}%</div>
-            </CardContent>
-          </Card>
-        ))}
+  function Lernplan() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Lernplan</h1>
+          <p style={styles.sectionSub}>Kommt als Nächstes nach dem PDF-Check.</p>
+        </div>
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>Nächster Ausbauschritt</div>
+          <div style={styles.cardSub}>Erst prüfen wir jetzt, dass Prüfungen und PDF sauber laufen.</div>
+        </div>
       </div>
+    );
+  }
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Schwierige Aufgaben</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="rounded-2xl border p-3">HF2 · 2011 Sommer · Aufgabe 1</div>
-            <div className="rounded-2xl border p-3">HF1 · 2011 Sommer · Aufgabe 4</div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Nächste Wiederholungen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="rounded-2xl border p-3">Morgen · HF1 Nachkalkulation</div>
-            <div className="rounded-2xl border p-3">Freitag · HF2 Schutzmaßnahmen</div>
-          </CardContent>
-        </Card>
+  function Simulation() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Simulation</h1>
+          <p style={styles.sectionSub}>Erste Basis nach dem PDF-Check.</p>
+        </div>
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>Simulation folgt</div>
+          <div style={styles.cardSub}>Zuerst bringen wir Prüfungen, Bearbeitung und Fortschritt stabil online.</div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const KalenderPage = () => (
-    <div className="space-y-6">
-      <SectionTitle icon={CalendarDays} title="Kalender" subtitle="Später für Privat- und Schulkalender." />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Kalender verbinden</CardTitle>
-            <CardDescription>Für automatische Lernblöcke</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full rounded-2xl justify-start">Apple Kalender verbinden</Button>
-            <Button variant="outline" className="w-full rounded-2xl justify-start">Google Kalender verbinden</Button>
-            <Button variant="outline" className="w-full rounded-2xl justify-start">Schulkalender importieren</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-3xl shadow-sm">
-          <CardHeader>
-            <CardTitle>Geplante Funktion</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>• freie Zeitfenster erkennen</p>
-            <p>• Lernblöcke automatisch setzen</p>
-            <p>• bei Ausfall flexibel umplanen</p>
-          </CardContent>
-        </Card>
+  function Fortschritt() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Fortschritt</h1>
+          <p style={styles.sectionSub}>Aus erledigten Aufgaben berechnet.</p>
+        </div>
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>HF1 Fortschritt</div>
+          <div style={styles.cardSub}>{progress.hf1}% abgeschlossen</div>
+          <div style={styles.progressBar}>
+            <div style={styles.progressFill(progress.hf1)}></div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const renderPage = () => {
-    switch (page) {
-      case "dashboard":
-        return <DashboardPage />;
-      case "lernplan":
-        return <LernplanPage />;
-      case "pruefungen":
-        return <PruefungenPage />;
-      case "simulation":
-        return <SimulationPage />;
-      case "fortschritt":
-        return <FortschrittPage />;
-      case "kalender":
-        return <KalenderPage />;
-      case "aufgabe":
-        return <AufgabenDetail />;
-      default:
-        return <DashboardPage />;
-    }
-  };
+  function Kalender() {
+    return (
+      <div style={styles.main}>
+        <div>
+          <h1 style={styles.sectionTitle}>Kalender</h1>
+          <p style={styles.sectionSub}>Kommt später mit Privat- und Schulkalender.</p>
+        </div>
+        <div style={styles.card}>
+          <div style={styles.cardTitle}>Geplant</div>
+          <div style={styles.cardSub}>Nach Prüfungen und PDF-Einbindung.</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto grid max-w-7xl gap-6 p-4 md:p-6 lg:grid-cols-[260px_1fr]">
-        <aside className="rounded-[28px] border bg-card p-4 shadow-sm lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
-          <div className="mb-6">
-            <div className="text-2xl font-bold tracking-tight">MeisterTrainer</div>
-            <p className="mt-1 text-sm text-muted-foreground">Teil 2 · PC, iPhone, iPad · PDF-ready</p>
-          </div>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <aside style={styles.sidebar}>
+          <div style={styles.title}>MeisterTrainer</div>
+          <div style={styles.sub}>Teil 2 · PC, iPhone, iPad</div>
 
-          <nav className="space-y-2">
-            {sidebar.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setPage(item.id)}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${page === item.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="mt-6 rounded-[24px] border bg-muted/50 p-4">
-            <div className="text-sm font-semibold">Schnellzugriff</div>
-            <div className="mt-3 flex flex-col gap-2">
-              <Button className="rounded-2xl" onClick={() => { changeHF("hf1"); setPage("pruefungen"); }}>HF1 öffnen</Button>
-              <Button variant="outline" className="rounded-2xl" onClick={() => setPage("aufgabe")}>Einzelaufgabe testen</Button>
-            </div>
-          </div>
+          <button style={styles.navButton(seite === "dashboard")} onClick={function() { setSeite("dashboard"); }}>Dashboard</button>
+          <button style={styles.navButton(seite === "lernplan")} onClick={function() { setSeite("lernplan"); }}>Lernplan</button>
+          <button style={styles.navButton(seite === "pruefungen")} onClick={function() { setSeite("pruefungen"); }}>Prüfungen</button>
+          <button style={styles.navButton(seite === "simulation")} onClick={function() { setSeite("simulation"); }}>Simulation</button>
+          <button style={styles.navButton(seite === "fortschritt")} onClick={function() { setSeite("fortschritt"); }}>Fortschritt</button>
+          <button style={styles.navButton(seite === "kalender")} onClick={function() { setSeite("kalender"); }}>Kalender</button>
         </aside>
 
-        <main className="space-y-6">{renderPage()}</main>
+        <main>
+          {seite === "dashboard" ? <Dashboard /> : null}
+          {seite === "pruefungen" ? <Pruefungen /> : null}
+          {seite === "aufgabe" ? <Aufgabe /> : null}
+          {seite === "lernplan" ? <Lernplan /> : null}
+          {seite === "simulation" ? <Simulation /> : null}
+          {seite === "fortschritt" ? <Fortschritt /> : null}
+          {seite === "kalender" ? <Kalender /> : null}
+        </main>
       </div>
     </div>
   );
 }
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
