@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MeisterTrainer</title>
+</head>
+<body>
+
+<h1>MeisterTrainer Test</h1>
+
+<p>Wenn du das siehst läuft deine Seite.</p>
+
+</body>
+</html>
